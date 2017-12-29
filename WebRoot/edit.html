@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>可编辑表格</title>
+		<link rel="stylesheet" type="text/css" href="themes/default/easyui.css">
+		<link rel="stylesheet" type="text/css" href="themes/icon.css">
+		<script type="text/javascript" src="jquery.min.js"></script>
+		<script type="text/javascript" src="jquery.easyui.min.js"></script>
+		<script type="text/javascript">
+			$(function() {
+				$("#dg").datagrid('load', {
+					id:5
+				})
+			})
+		</script>
+	</head>
+
+	<body>
+		<table id="dg" class="easyui-datagrid" title="支持行编辑的数据表格" style="width:700px;height:auto" data-options="
+				iconCls: 'icon-edit',
+				singleSelect: true,
+				toolbar: '#tb',
+				url: 'queryEmps',
+				method: 'get',
+				fitColumns:'true',
+				onClickRow: onClickRow
+			">
+			<thead>
+				<tr>
+					<th data-options="field:'empid',width:80,align:'center'">员工编号</th>
+					<th data-options="field:'ename',width:150,align:'center',editor:'textbox'">员工姓名</th>
+					<th data-options="field:'sal',width:120,align:'center',editor:'numberbox'">员工薪水</th>
+					<th data-options="field:'deptid',width:120,align:'center',
+						formatter:function(value,row){
+							return row.dname;
+						},
+						editor:{
+							type:'combobox',
+							options:{
+								valueField:'id',
+								textField:'dname',
+								method:'get',
+								url:'queryDeptsById',
+								required:true
+							}
+						}">所属部门</th>
+					<!--<th data-options="field:'attr1',width:250,editor:'textbox'">Attribute</th>
+					<th data-options="field:'status',width:60,align:'center',editor:{type:'checkbox',options:{on:'P',off:''}}">Status</th>-->
+				</tr>
+			</thead>
+		</table>
+
+		<div id="tb" style="height:auto">
+			<a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-add',plain:true" onclick="append()">添加</a>
+			<a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true" onclick="removeit()">删除</a>
+			<a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-save',plain:true" onclick="accept()">保存</a>
+			<a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-undo',plain:true" onclick="reject()">撤销</a>
+			<a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-search',plain:true" onclick="getChanges()">已编辑行数</a>
+		</div>
+
+		<script type="text/javascript">
+			var editIndex = undefined;
+
+			function endEditing() {
+				if(editIndex == undefined) {
+					return true
+				}
+				if($('#dg').datagrid('validateRow', editIndex)) {
+					var ed = $('#dg').datagrid('getEditor', {
+						index: editIndex,
+						field: 'productid'
+					});
+					var productname = $(ed.target).combobox('getText');
+					$('#dg').datagrid('getRows')[editIndex]['dname'] = productname;
+					$('#dg').datagrid('endEdit', editIndex);
+					editIndex = undefined;
+					return true;
+				} else {
+					return false;
+				}
+			}
+
+			function onClickRow(index) {
+				if(editIndex != index) {
+					if(endEditing()) {
+						$('#dg').datagrid('selectRow', index)
+							.datagrid('beginEdit', index);
+						editIndex = index;
+					} else {
+						$('#dg').datagrid('selectRow', editIndex);
+					}
+				}
+			}
+
+			function append() {
+				if(endEditing()) {
+					$('#dg').datagrid('appendRow', {
+						status: 'P'
+					});
+					// 编辑行的位置在getRows(总长度) - 1
+					editIndex = $('#dg').datagrid('getRows').length - 1;
+					$('#dg').datagrid('selectRow', editIndex)
+						.datagrid('beginEdit', editIndex);
+				}
+			}
+
+			function removeit() {
+				if(editIndex == undefined) {
+					return
+				}
+				$('#dg').datagrid('cancelEdit', editIndex)
+					.datagrid('deleteRow', editIndex);
+				editIndex = undefined;
+			}
+
+			function accept() {
+				if(endEditing()) {
+					$('#dg').datagrid('acceptChanges');
+				}
+			}
+
+			function reject() {
+				$('#dg').datagrid('rejectChanges');
+				editIndex = undefined;
+			}
+
+			function getChanges() {
+				var rows = $('#dg').datagrid('getChanges');
+				alert(rows.length + ' rows are changed!');
+			}
+		</script>
+	</body>
+
+</html>

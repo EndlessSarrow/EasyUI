@@ -1,0 +1,295 @@
+<!DOCTYPE>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>EasyUI Layout</title>
+		<link rel="stylesheet" type="text/css" href="themes/default/easyui.css">
+		<link rel="stylesheet" type="text/css" href="themes/icon.css">
+		<script type="text/javascript" src="jquery.min.js"></script>
+		<script type="text/javascript" src="jquery.easyui.min.js"></script>
+		<style type="text/css">
+			#userInfo {
+				float: right;
+				margin: 100px 30px 0px 0px;
+				color: white;
+				font-size: 15px;
+			}
+			
+			#userInfo a {
+				color: white;
+				margin: 5px;
+			}
+			
+			#userInfo a:hover {
+				color: #f03f05;
+			}
+			
+			#stuManager a {
+				color: black;
+				font-size: 15px;
+				text-decoration: none;
+				padding-left: 16px;
+			}
+			
+			#stuManager a:hover {
+				background: rgb(255, 228, 141);
+				border: 1px solid orange;
+			}
+		</style>
+		<script type="text/javascript">
+			// 查询
+			function queryEmps() {
+				
+				// 它会发送个Ajax请求，会把sname参数带上
+				$('#dg').datagrid('load', {
+					id:$("#tree").tree('getSelected').id
+				});
+			}
+
+			// 清除表单数据
+			function clearForm() {
+				$('#ff').form('clear');
+			}
+
+			// 修改
+			function submitUpdateForm() {
+				var line = $("#dg").datagrid('getSelected');
+				$('#ff').form('submit', {
+					url: "updateEmp/" + line.empid,
+					success: function(msg) {
+						msg = JSON.parse(msg);
+						if(msg.code == 1) {
+							$.messager.alert('提示 ', '修改成功');
+							$("#w").window('close');
+							queryEmps();
+						} else {
+							$.messager.alert('提示 ', '修改失败，异常堆栈：' + msg.message);
+						}
+					}
+				});
+			}
+
+			// 新增学生信息
+			function submitAddForm() {
+				$('#ff').form('submit', {
+					url: "addEmp",
+					success: function(msg) {
+						msg = JSON.parse(msg);
+						if(msg.code == 1) {
+							$.messager.alert('提示 ', '学生信息添加成功');
+							$("#w").window('close');
+							queryEmps();
+						} else {
+							$.messager.alert('提示 ', '添加失败，异常堆栈：' + msg.message);
+						}
+					}
+				});
+			}
+
+			$(function() {
+
+				// 动态加载下拉列表
+				$("#cb").combobox({
+					url: 'getAllDepts',
+					valueField: 'deptno',
+					textField: 'dname',
+					editable: false,
+					method: 'get'
+				})
+				
+				// 加载树
+				$("#tree").tree({
+					onSelect: function(node) {
+						// node对象就是当前选中的节点
+						var deptId = node.id;
+
+						// 让表格重新加载数据
+						$("#dg").datagrid('load', {
+							id: deptId
+						})
+
+						$("#cb").combobox("setValue", deptId); // 默认值
+					}
+				});
+
+				/*
+				 * 添加工具条，toolbar中一个JSON对象相当于一个
+				 * 功能，增删改三个功能，这里就定义三个。
+				 */
+				// 设置data-options
+				$("#dg").datagrid({
+					rownumbers: true,
+					toolbar: [{ // 修改
+							iconCls: 'icon-edit',
+							text: '修改',
+							handler: function() {
+								var line = $("#dg").datagrid('getSelected');
+								if(line == null) { // 判空
+									// 提示框
+									$.messager.alert('警告', '请选中至少一行数据');
+									return;
+								}
+								$("#w").window('open') // 弹出修改界面
+
+								$('#ff').form('load', line); //将选中行的数据填充到表单中
+
+								$('#addEmp').hide(); // 隐藏掉添加按钮所在的DIV
+
+								$('#updateEmp').show(); // 显示提交按钮所在的DIV
+
+								// 改title以及图标
+								$('#w').panel({
+									title: "修改员工",
+									iconCls: 'icon-edit'
+								});
+
+								// 添加RestFul风格隐藏表单域
+								if(!$("#restFul")[0]) { //如果为空则添加隐藏表单域
+									$("#ff").prepend("<input type='hidden' name='_method' value='put' id='restFul' />");
+								}
+
+								// 部门下拉框选中当前员工所在部门
+								$('#cb').combobox("setValue", line.deptid); // 默认值
+							}
+						},
+						{ // 新增
+							iconCls: 'icon-myAdd',
+							text: '新增',
+							handler: function() {
+
+								// 清空一下表单缓存
+								clearForm();
+
+								$("#w").window('open') // 弹出界面
+
+								$('#updateEmp').hide(); // 隐藏掉修改按钮所在的DIV
+
+								$("#addEmp").show(); //显示新增员工按钮所在DIV 
+
+								// 改title以及图标
+								$('#w').panel({
+									title: "添加员工信息",
+									iconCls: 'icon-add'
+								});
+
+								/*
+								 	把restFul风格表单域删除掉
+								 	这么判断的原因是JQuery选择器选中的元素不存在，也不会返回null
+								 */
+								if($("#restFul").length > 0) {
+									$("#restFul").remove();
+								}
+							}
+						}, { // 删除
+							iconCls: 'icon-remove',
+							text: '删除',
+							handler: function() {
+								var selections = $("#dg").datagrid('getSelections');
+								if(selections.length < 1) { // 判空
+									// 提示框
+									$.messager.alert('警告', '请选中至少一行数据');
+									return;
+								}
+								$.messager.confirm('确认对话框', '将删除' + selections.length + '条数据，是否继续？', function(r) {
+									if(r) {
+
+										// 拼接一个id数组
+										var idArray = new Array();
+										for(var i = 0; i < selections.length; i++) {
+											idArray[i] = selections[i].empid;
+										}
+
+										$.post("deleteEmp", {
+											_method: 'delete',
+											idString: JSON.stringify(idArray)
+										}, function(msg) {
+											msg = JSON.parse(msg);
+											if(msg.code == 1) {
+												$.messager.alert('提示 ', '删除成功');
+												queryEmps();
+											} else {
+												$.messager.alert('提示 ', '删除失败，异常堆栈：' + msg.message);
+											}
+										})
+									}
+								});
+							}
+						}
+					]
+				});
+			});
+		</script>
+	</head>
+
+	<body>
+		<div class="easyui-layout" style="width:1000px;height:750px;margin:0 auto;">
+			<div data-options="region:'north'" style="height:180px;background: url(banner.png);background-size:100%;">
+				<div id="userInfo">
+					欢迎
+					<a href="">xxx</a>
+					<a href="">修改密码</a>
+					<a href="">安全退出</a>
+				</div>
+			</div>
+			<div data-options="region:'west',split:true" title="West" style="width:250px;height:600px;padding:0px;">
+				<div id="accordion" class="easyui-accordion" style="width:243px;height:540px;border:none;">
+					<div id="stuManager" title="员工管理" data-options="iconCls:'icon-man'" style="overflow:auto;padding:10px;">
+						<ul id="tree" class="easyui-tree" data-options="url:'queryDepts',method:'get'"></ul>
+					</div>
+					<div title="系统设置" data-options="iconCls:'icon-help'" style="padding:10px;"></div>
+					<div title="测试模块" data-options="iconCls:'icon-search'" style="padding:10px;"></div>
+				</div>
+			</div>
+			<div data-options="region:'center'">
+				<select id="cc" class="easyui-combobox" data-options="editable:false" name="queryType" style="width:135px;">
+					<option value="1">根据编号查询</option>
+					<option value="2">根据月薪范围查询</option>
+					<option value="0" selected="selected">根据姓名查询</option>
+				</select> <input id="search" class="easyui-textbox" placeholder="123" type="text" name="name" data-options="required:false,prompt:'输入查询值...'" />
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="queryStudents()">搜索</a>
+				<table id="dg" class="easyui-datagrid" title="员工数据表" style="width:700px;height:250px" data-options="singleSelect:false,collapsible:true,url:'queryEmps',method:'get',pagination:true,fitColumns:true,rownumbers: true">
+					<thead>
+						<tr>
+							<th data-options="field:'empid',width:80,align:'center'">员工编号</th>
+							<th data-options="field:'ename',width:100,align:'center'">员工姓名</th>
+							<th data-options="field:'sal',width:80,align:'center'">员工月薪</th>
+						</tr>
+					</thead>
+				</table>
+			</div>
+		</div>
+		<div id="w" class="easyui-window" title="员工信息编辑" data-options="iconCls:'icon-myAdd',closed:true" style="width:330px;height:270px;padding:5px;">
+			<form id="ff" method="post">
+				<table>
+					<tr>
+						<td width="80">员工姓名:</td>
+						<td><input class="easyui-textbox" type="text" name="ename" data-options="required:true,missingMessage:'员工姓名不能为空'"></input>
+						</td>
+					</tr>
+					<tr>
+						<td>所属部门:</td>
+						<td>
+							<select id="cb" class="easyui-combobox" name="deptid" style="width: 168px;" data-options="editable:false">
+
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td>员工月薪:</td>
+						<td><input class="easyui-textbox" type="text" name="sal" data-options="required:true,missingMessage:'员工姓名不能为空'"></input>
+						</td>
+					</tr>
+				</table>
+			</form>
+			<div id="updateEmp" style="text-align:center;">
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="submitUpdateForm()">提交</a>
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="clearForm()">重置</a>
+			</div>
+			<div id="addEmp" style="text-align:center;">
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="submitAddForm()">提交</a>
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="clearForm()">重置</a>
+			</div>
+		</div>
+	</body>
+
+</html>

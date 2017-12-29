@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration
+  PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+  "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+
+<generatorConfiguration>
+
+	<!-- 配置生成数据库连接四要素
+		  需要的驱动包的绝对路径 -->
+	<classPathEntry
+		location="E:\mysql-connector-java-5.1.6.jar" />
+
+	<!-- 四要素配置 
+		targetRuntime：开发环境使用的MyBatis的版本，
+		这里用的3.3.0， 那么填的就是MyBatis3，使用哪个版本
+		就要配置对应的值，可以在这里查看支持的值：
+		http://www.mybatis.org/generator/configreference/context.html
+	 -->
+	<context id="mysqlConn" targetRuntime="MyBatis3">
+		<plugin type="org.mybatis.generator.plugins.RowBoundsPlugin"></plugin>
+		<jdbcConnection 
+			driverClass="com.mysql.jdbc.Driver"
+			connectionURL="jdbc:mysql://localhost:3306/mydb" 
+			userId="root" 
+			password="123456">
+		</jdbcConnection>
+
+		<javaTypeResolver>
+			<property name="forceBigDecimals" value="false" />
+		</javaTypeResolver>
+		
+		<!-- 实体类bean 带有get、set方法的bean -->
+		<javaModelGenerator targetPackage="cn.et.student.entity" targetProject="src">
+			<property name="enableSubPackages" value="true" />
+			<property name="trimStrings" value="true" />
+		</javaModelGenerator>
+		
+	<!-- 	大猫 = 16  腿: 64
+		小猫 = 64  腿: 256
+		老鼠 = 320(每只大猫也有4只老鼠) 腿 : 1280 
+		人 2 
+		车上一个人所有的腿(不算第三条):1602 -->
+		
+		
+		<!-- sql语句相关的XML或者注解生成的包的路径(映射文件) -->
+		<sqlMapGenerator targetPackage="cn.et.shiro.lesson02.resource" targetProject="src">
+			<property name="enableSubPackages" value="true" />
+		</sqlMapGenerator>
+		
+		<!-- 映射接口生成的目录 -->
+		<javaClientGenerator type="ANNOTATEDMAPPER"
+			targetPackage="cn.et.student.dao" targetProject="src">
+			<property name="enableSubPackages" value="true" />
+		</javaClientGenerator>
+
+		<!-- 告诉MBG需要生成代码的表名 -->
+		<table tableName="student" > 
+			<!-- <columnOverride column="sal" javaType="java.lang.Double" jdbcType="NUMERIC"></columnOverride> -->
+		</table>
+	</context>
+</generatorConfiguration>

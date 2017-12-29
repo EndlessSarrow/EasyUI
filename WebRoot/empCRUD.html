@@ -1,0 +1,26 @@
+<!DOCTYPE>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>员工管理</title>
+		<link rel="stylesheet" type="text/css" href="themes/default/easyui.css">
+		<link rel="stylesheet" type="text/css" href="themes/icon.css">
+		<script type="text/javascript" src="jquery.min.js"></script>
+		<script type="text/javascript" src="jquery.easyui.min.js"></script>
+		<script type="text/javascript">
+		</script>
+	</head>
+
+	<body>
+		<table id="dg" class="easyui-datagrid" title="员工数据表" style="width:700px;height:250px" data-options="singleSelect:false,collapsible:true,url:'queryEmps',method:'get',pagination:true,fitColumns:true">
+			<thead>
+				<tr>
+					<th data-options="field:'empid',width:80,align:'center'">员工编号</th>
+					<th data-options="field:'ename',width:100,align:'center'">员工姓名</th>
+					<th data-options="field:'sal',width:80,align:'center'">员工月薪</th>
+				</tr>
+			</thead>
+		</table>
+	</body>
+</html>

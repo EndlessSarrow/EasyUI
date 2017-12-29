@@ -1,0 +1,262 @@
+<!DOCTYPE>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>学生管理</title>
+		<link rel="stylesheet" type="text/css" href="themes/default/easyui.css">
+		<link rel="stylesheet" type="text/css" href="themes/icon.css">
+		<script type="text/javascript" src="jquery.min.js"></script>
+		<script type="text/javascript" src="jquery.easyui.min.js"></script>
+		<script type="text/javascript">
+			function sexFormat(value) {
+				if(value == 1) {
+					return '男';
+				} else {
+					return '女';
+				}
+			}
+
+			// 查询
+			function queryStudents() {
+			
+				// 1：ID 2：地址 0：姓名
+				// 先把查询类型获取过来
+				var queryType = $("#cc").combobox('getValue');
+
+				var queryValue = $("#search").textbox('getValue');
+				
+				if(queryType == 1 && isNaN(queryValue)){
+					$.messager.alert('警告','参数不合法');
+				}
+				
+				// 它会发送个Ajax请求，会把sname参数带上
+				$('#dg').datagrid('load', {
+					queryValue: queryValue == null ? '' : queryValue,
+					queryType:queryType
+				});
+			}
+
+			// 清除表单数据
+			function clearForm() {
+				$('#ff').form('clear');
+			}
+
+			// 修改
+			function submitUpdateForm() {
+				var line = $("#dg").datagrid('getSelected');
+				$('#ff').form('submit', {
+					url: "update/" + line.sid,
+					success: function(msg) {
+						msg = JSON.parse(msg);
+						if(msg.code == 1) {
+							$.messager.alert('提示 ', '修改成功');
+							$("#w").window('close');
+							queryStudents();
+						} else {
+							$.messager.alert('提示 ', '修改失败，异常堆栈：' + msg.message);
+						}
+					}
+				});
+			}
+
+			// 新增学生信息
+			function submitAddForm() {
+				$('#ff').form('submit', {
+					url: "addStudent",
+					success: function(msg) {
+						msg = JSON.parse(msg);
+						if(msg.code == 1) {
+							$.messager.alert('提示 ', '学生信息添加成功');
+							$("#w").window('close');
+							queryStudents();
+						} else {
+							$.messager.alert('提示 ', '添加失败，异常堆栈：' + msg.message);
+						}
+					}
+				});
+			}
+
+			/*
+			 * 添加工具条，toolbar中一个JSON对象相当于一个
+			 * 功能，增删改三个功能，这里就定义三个。
+			 */
+			$(function() {
+			
+				// 默认根据姓名查询
+				var queryType = $("#cc").val();
+				$.messager.alert(queryType);
+				var queryValue = $("#search").textbox('getValue');
+				$("#dg").datagrid("load" , {
+					queryValue: queryValue == null ? '' : queryValue,
+					queryType:queryType
+				})
+			
+				// 设置data-options
+				$("#dg").datagrid({
+					rownumbers: true,
+					toolbar: [{ // 修改
+						iconCls: 'icon-edit',
+						text: '修改',
+						handler: function() {
+							var line = $("#dg").datagrid('getSelected');
+							if(line == null) { // 判空
+								// 提示框
+								$.messager.alert('警告', '请选中至少一行数据');
+								return;
+							}
+							$("#w").window('open') // 弹出修改界面
+
+							$('#ff').form('load', line); //将选中行的数据填充到表单中
+
+							$('#addStu').hide(); // 隐藏掉添加按钮所在的DIV
+
+							$('#updateStu').show(); // 显示提交按钮所在的DIV
+
+							// 改title以及图标
+							$('#w').panel({
+								title: "修改学生信息",
+								iconCls: 'icon-edit'
+							});
+
+							// 添加RestFul风格隐藏表单域
+							if(!$("#restFul")[0]) { //如果为空则添加隐藏表单域
+								$("#ff").prepend("<input type='hidden' name='_method' value='put' id='restFul' />");
+							}
+						}
+					}, { // 新增
+						iconCls: 'icon-myAdd',
+						text: '新增',
+						handler: function() {
+
+							// 清空一下表单缓存
+							clearForm();
+
+							$("#w").window('open') // 弹出界面
+
+							$('#updateStu').hide(); // 隐藏掉修改按钮所在的DIV
+
+							$("#addStu").show(); //显示新增学生按钮所在DIV 
+
+							// 改title以及图标
+							$('#w').panel({
+								title: "添加学生信息",
+								iconCls: 'icon-add'
+							});
+
+							/*
+							 	把restFul风格表单域删除掉
+							 	这么判断的原因是JQuery选择器选中的元素不存在，也不会返回null
+							 */
+							if($("#restFul").length > 0) {
+								$("#restFul").remove();
+							}
+
+						}
+					}, { // 删除
+						iconCls: 'icon-remove',
+						text: '删除',
+						handler: function() {
+							var selections = $("#dg").datagrid('getSelections');
+							if(selections.length < 1) { // 判空
+								// 提示框
+								$.messager.alert('警告', '请选中至少一行数据');
+								return;
+							}
+							$.messager.confirm('确认对话框', '将删除' + selections.length + '条数据，是否继续？', function(r) {
+								if(r) {
+
+									// 拼接一个id数组
+									var idArray = new Array();
+									for(var i = 0; i < selections.length; i++) {
+										idArray[i] = selections[i].sid;
+									}
+
+									$.post("deleteStu", {
+										_method: 'delete',
+										idString: JSON.stringify(idArray)
+									}, function(msg) {
+										msg = JSON.parse(msg);
+										if(msg.code == 1) {
+											$.messager.alert('提示 ', '删除成功');
+											queryStudents();
+										} else {
+											$.messager.alert('提示 ', '删除失败，异常堆栈：' + msg.message);
+										}
+									})
+								}
+							});
+						}
+					}]
+				})
+			})
+		</script>
+	</head>
+
+	<body>
+		<select id="cc" class="easyui-combobox" name="queryType" style="width:135px;">
+			<option value="1">根据ID查询</option>
+			<option value="2">根据地址模糊查询</option>
+			<option value="0" selected="selected">根据姓名模糊查询</option>
+		</select>
+		<input id="search" class="easyui-textbox" placeholder="123" type="text" name="name" data-options="required:false,prompt:'输入查询值...'" />
+		<a href="javascript:void(0)" class="easyui-linkbutton" onclick="queryStudents()">搜索</a>
+
+		<div style="margin-top: 10px;"></div>
+		<table id="dg" class="easyui-datagrid" title="学生数据表" style="width:700px;height:250px" data-options="singleSelect:false,collapsible:true,url:'query',method:'get',pagination:true,fitColumns:true">
+			<thead>
+				<tr>
+					<th data-options="field:'sid',width:80,align:'center'">学生编号</th>
+					<th data-options="field:'sname',width:100,align:'center'">学生姓名</th>
+					<th data-options="field:'gender',width:80,align:'center',formatter:sexFormat">性别
+					</th>
+					<th data-options="field:'age',width:80,align:'center'">年龄</th>
+					<th data-options="field:'address',width:250,align:'center'">住址</th>
+				</tr>
+			</thead>
+		</table>
+		<div id="w" class="easyui-window" title="修改学生信息" data-options="iconCls:'icon-myAdd',closed:true" style="width:300px;height:270px;padding:5px;">
+			<form id="ff" method="post" enctype="multipart/form-data">
+				<table>
+					<tr>
+						<td>学生姓名:</td>
+						<td><input class="easyui-textbox" type="text" name="sname" data-options="required:true"></input>
+						</td>
+					</tr>
+					<tr>
+						<td>性别:</td>
+						<td>
+							<select class="easyui-combobox" name="gender" style="width: 168px;">
+								<option value="1" selected="selected">男</option>
+								<option value="0">女</option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td>年龄:</td>
+						<td><input class="easyui-textbox" type="text" name="age" data-options="required:true"></input>
+						</td>
+					</tr>
+					<tr>
+						<td>家庭住址:</td>
+						<td><input class="easyui-textbox" name="address" data-options="multiline:true" style="height:60px"></input>
+						</td>
+					</tr>
+					<tr>
+						<td>个人形象:</td>
+						<td><input class="easyui-filebox" name="studentImage" data-options="prompt:'请选择形象照片...'" style="width:100%"></td>
+					</tr>
+
+				</table>
+			</form>
+			<div id="updateStu" style="text-align:center;">
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="submitUpdateForm()">提交</a>
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="clearForm()">重置</a>
+			</div>
+			<div id="addStu" style="text-align:center;">
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="submitAddForm()">提交</a>
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="clearForm()">重置</a>
+			</div>
+		</div>
+	</body>
+</html>

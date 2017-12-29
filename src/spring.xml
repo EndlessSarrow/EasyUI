@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+	http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.1.xsd
+	http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.2.xsd
+	http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.2.xsd
+	http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.2.xsd
+	">
+	<!-- Root配置文件负责管理Bean，自然就应该专注于service层和dao层 -->
+	<context:component-scan base-package="cn">
+		<context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller" />
+	</context:component-scan>
+
+	<!-- 所有数据库操作的源头 都是实现自DataSrouce接口 DriverManagerDataSource 这个东西是请求一次产生一次连接，用完就关闭，效率极低。 
+		这里就使用阿里开发的号称是目前最屌的连接池来做这个数据源配置吧。 -->
+	<!-- 读取四要素配置文件 -->
+	<context:property-placeholder location="classpath:jdbc.properties" />
+
+	<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
+		<property name="url" value="${url}"></property>
+		<property name="username" value="${user}"></property>
+		<property name="password" value="${password}"></property>
+		<property name="driverClassName" value="${driverClass}"></property>
+		
+		<!-- 初始化的链接数 -->
+		<property name="initialSize" value="10"></property>
+		
+		<!-- 最多允许的链接数 -->
+		<property name="maxActive" value="200"></property>
+		
+		<!-- 最多允许的排队人数 -->
+		<property name="maxIdle" value="100"></property>
+		
+		<!-- 开启SQL监控功能 -->
+		<property name="filters" value="stat"></property>
+	</bean>
+	
+	<!-- 集成MyBatis -->
+	<!-- 初始化SqlSession工厂 -->
+	<bean id="factoryBean" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+	
+	<!-- 初始化SqlSessionTemplate -->
+	<bean id="sessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+		<!-- 这里需要注入一个SqlSession，但是没有setter方法，只能通过构造注入了 -->
+		<constructor-arg index="0" ref="factoryBean"></constructor-arg>
+	</bean>
+	
+	 <!-- 扫描MyBatis的接口映射 -->
+	<bean id="scannerConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="cn.*..*.dao"></property>
+	</bean>
+	
+	<!-- 事务配置 -->
+	<!-- 事务管理器 -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+	
+	<!-- 需要前置后置通知的方法 -->
+	<tx:advice id="advice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="save*" rollback-for="java.lang.Exception"/>
+			<tx:method name="delete*" rollback-for="java.lang.Exception"/>
+			<tx:method name="update*" rollback-for="java.lang.Exception"/>
+			<tx:method name="*" read-only="true"/>
+		</tx:attributes>
+	</tx:advice>
+	
+	<!-- 定义切点 -->
+	<aop:config>
+		<aop:pointcut expression="execution(* cn.*..*.service.*.*(..))" id="myPointCut"/>
+		<aop:advisor advice-ref="advice" pointcut-ref="myPointCut"/>
+	</aop:config>
+</beans>
