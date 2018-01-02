@@ -18,7 +18,7 @@
 	<!-- 所有数据库操作的源头 都是实现自DataSrouce接口 DriverManagerDataSource 这个东西是请求一次产生一次连接，用完就关闭，效率极低。 
 		这里就使用阿里开发的号称是目前最屌的连接池来做这个数据源配置吧。 -->
 	<!-- 读取四要素配置文件 -->
-	<context:property-placeholder location="classpath:jdbc.properties" />
+	<context:property-placeholder location="classpath:oracle.properties" />
 
 	<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
 		<property name="url" value="${url}"></property>
@@ -53,7 +53,7 @@
 	
 	 <!-- 扫描MyBatis的接口映射 -->
 	<bean id="scannerConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
-		<property name="basePackage" value="cn.*..*.dao"></property>
+		<property name="basePackage" value="cn.et.dao"></property>
 	</bean>
 	
 	<!-- 事务配置 -->
@@ -74,7 +74,7 @@
 	
 	<!-- 定义切点 -->
 	<aop:config>
-		<aop:pointcut expression="execution(* cn.*..*.service.*.*(..))" id="myPointCut"/>
+		<aop:pointcut expression="execution(* cn.et.service.*.*(..))" id="myPointCut"/>
 		<aop:advisor advice-ref="advice" pointcut-ref="myPointCut"/>
 	</aop:config>
 </beans>
