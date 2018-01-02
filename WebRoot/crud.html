@@ -32,7 +32,7 @@
 				
 				// 它会发送个Ajax请求，会把sname参数带上
 				$('#dg').datagrid('load', {
-					queryValue: queryValue == null ? '' : queryValue,
+					queryValue: queryValue,
 					queryType:queryType
 				});
 			}
@@ -85,7 +85,7 @@
 			
 				// 默认根据姓名查询
 				var queryType = $("#cc").val();
-				$.messager.alert(queryType);
+				// $.messager.alert(queryType);
 				var queryValue = $("#search").textbox('getValue');
 				$("#dg").datagrid("load" , {
 					queryValue: queryValue == null ? '' : queryValue,
