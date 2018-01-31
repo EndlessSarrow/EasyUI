@@ -30,7 +30,7 @@ public class Pager {
 	private Integer pageSize;
 
 	/**
-	 * limit起点算法： curPage * size - size + 1
+	 * 起点算法： curPage * size - size + 1
 	 */
 	private Integer startIndex;
 
@@ -60,12 +60,15 @@ public class Pager {
 		// 总页数
 		this.totalPage = totalCount % this.pageSize == 0 ? totalCount
 				/ this.pageSize : (totalCount / this.pageSize) + 1;
+		
 		this.nextPage = this.curPage == totalPage ? this.curPage
 				: this.curPage + 1;// 下一页
+		
 		this.prePage = curPage == 1 ? 1 : curPage - 1;// 前一页
+		
 		this.startIndex = (curPage - 1) * this.pageSize + 1; // limit起点
+		
 		this.endIndex = curPage * this.pageSize; // limit终点
-
 	}
 
 	public Integer getNextPage() {
