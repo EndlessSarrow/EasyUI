@@ -30,7 +30,6 @@ public class EmpController {
 	@RequestMapping(value = "deleteEmp", method = RequestMethod.DELETE)
 	public Result deleteEmpsById(String idString, OutputStream os) {
 		Result result = new Result();
-		System.out.println(idString);
 		// 1表示成功
 		result.setCode(1);
 		try {
