@@ -35,12 +35,6 @@
 			<property name="trimStrings" value="true" />
 		</javaModelGenerator>
 		
-	<!-- 	大猫 = 16  腿: 64
-		小猫 = 64  腿: 256
-		老鼠 = 320(每只大猫也有4只老鼠) 腿 : 1280 
-		人 2 
-		车上一个人所有的腿(不算第三条):1602 -->
-		
 		
 		<!-- sql语句相关的XML或者注解生成的包的路径(映射文件) -->
 		<sqlMapGenerator targetPackage="cn.et.shiro.lesson02.resource" targetProject="src">
